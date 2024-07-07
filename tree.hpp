@@ -13,7 +13,6 @@
 #include "node.hpp"
 
 #include <SFML/Graphics.hpp>
-#include "treeDrawer.hpp"
 
 template<typename T>
 class Tree {
@@ -30,7 +29,11 @@ public:
     void add_sub_node(Node<T>& root_node, Node<T>& child);
 
     friend std::ostream& operator<<(std::ostream& os, const Tree& tree) {
-        printTree(os, tree.root_, 0);
+        //printTree(os, tree.root_, 0);
+        //return os;
+        if (tree.root_ != nullptr) {
+            tree.visualize();
+        }
         return os;
     }
 
@@ -232,30 +235,10 @@ public:
     BFS_Iterator begin_bfs_scan() { return BFS_Iterator(this->root_); }
     BFS_Iterator end_bfs_scan() { return BFS_Iterator(nullptr); }
 
+
 private:
-
-    static void printTree(std::ostream& os, Node<T>* node, int depth) {
-        if (!node) return;
-        /*
-        os << std::string(static_cast<std::string::size_type>(depth * 2), ' ') << node->get_value() << "\n";
-        for (const auto& child : node->get_children()) {
-            printTree(os, child, depth + 1);
-        }
-        */
-
-        sf::RenderWindow window(sf::VideoMode(800, 600), "SFML Tree Demo");
-        /*
-        std::cout << "Yeah\n";
-        // Example usage:
-        TreeDrawer<double> drawer;
-        // Add nodes to the tree
-
-        // Example drawing:
-        drawer.drawNode(window, node, 400.f, 300.f, 0.f, 0.f);
-
-        window.display();
-        */
-
+    void visualize() const {
+        sf::RenderWindow window(sf::VideoMode(800, 600), "Tree Visualization");
 
         while (window.isOpen()) {
             sf::Event event;
@@ -264,17 +247,97 @@ private:
                     window.close();
             }
 
-            window.clear();
-            TreeDrawer<double> drawer;
-            // Add nodes to the tree
-
-            // Example drawing:
-            drawer.drawNode(window, node, 400.f, 300.f, 0.f, 0.f);
-            //tree.printTree(window);
-            window.display();
+            window.clear(sf::Color::White); // Clear window with white color
+            if (root_ != nullptr) {
+                drawNode(window, root_, window.getSize().x / 2, 50, 300);
+            }
+            window.display();               // Display the updated window
         }
-        
     }
+    /*
+    void drawNode(sf::RenderWindow& window, Node<T>* node, float x, float y, float offsetX) const {
+        if (node == nullptr) return;
+
+        sf::CircleShape circle(20);
+        circle.setFillColor(sf::Color::Green);
+        circle.setPosition(x, y);
+        window.draw(circle);
+
+        sf::Font font;
+        if (!font.loadFromFile("/usr/share/fonts/truetype/msttcorefonts/Arial.ttf")) {
+            std::cerr << "Failed to load font\n";
+            return;
+        }
+
+        sf::Text text;
+        text.setFont(font);
+        text.setString(std::to_string(node->get_value()));
+        text.setCharacterSize(15);
+        text.setFillColor(sf::Color::Black);
+        text.setPosition(x + 10, y + 5);
+        window.draw(text);
+
+        float childX = x - (node->get_children().size() - 1) * offsetX / 2;
+        for (auto* child : node->get_children()) {
+            sf::Vertex line[] = {
+                sf::Vertex(sf::Vector2f(x + 20, y + 20)),
+                sf::Vertex(sf::Vector2f(childX + 20, y + 100))
+            };
+            window.draw(line, 2, sf::Lines);
+            drawNode(window, child, childX, y + 100, offsetX / 2);
+            childX += offsetX;
+        }
+    }
+    
+
+  
+    
+    */
+    void drawNode(sf::RenderWindow& window, Node<T>* node, float startX, float startY, float offsetX) const {
+        if (node == nullptr) return;
+
+        sf::Font font;
+        if (!font.loadFromFile("/usr/share/fonts/truetype/msttcorefonts/Arial.ttf")) {
+            std::cerr << "Failed to load font\n";
+            return;
+        }
+
+        std::stack<std::tuple<Node<T>*, float, float, float>> stack;
+        stack.push({node, startX, startY, offsetX});
+
+        while (!stack.empty()) {
+            auto [current, x, y, offset] = stack.top();
+            stack.pop();
+
+            sf::CircleShape circle(20);
+            circle.setFillColor(sf::Color::Green);
+            circle.setPosition(x, y);
+            window.draw(circle);
+
+            sf::Text text;
+            text.setFont(font);
+            text.setString(std::to_string(current->get_value()));
+            text.setCharacterSize(15);
+            text.setFillColor(sf::Color::Black);
+            text.setPosition(x + 10, y + 5);
+            window.draw(text);
+
+            const auto& children = current->get_children();
+            float childX = x - (children.size() - 1) * offset / 2;
+            for (auto* child : children) {
+                if (child) {
+                    sf::Vertex line[] = {
+                        sf::Vertex(sf::Vector2f(x + 20, y + 20)),
+                        sf::Vertex(sf::Vector2f(childX + 20, y + 100))
+                    };
+                    window.draw(line, 2, sf::Lines);
+                    stack.push({child, childX, y + 100, offset / 2});
+                    childX += offset;
+                }
+            }
+        }
+    }
+
 };
 
 template <typename T>
