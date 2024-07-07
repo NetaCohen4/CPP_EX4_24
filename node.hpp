@@ -1,3 +1,9 @@
+/*
+    Ex4
+    325195774
+    netaco432@gmail.com
+*/
+
 #pragma once
 
 #include <iostream>
@@ -24,13 +30,5 @@ class Node {
         void add_child(Node<T> *child) {
             children_.push_back(child);
         }
-        
 
 };
-
-/*
-template <typename T>
-std::vector<Node<T>> Node<T>::get_children() {
-    return children_;
-}
-*/

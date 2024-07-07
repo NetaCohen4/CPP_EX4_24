@@ -1,3 +1,9 @@
+/*
+    Ex4
+    325195774
+    netaco432@gmail.com
+*/
+
 #pragma once
 
 #include <iostream>
@@ -5,6 +11,9 @@
 #include <stack>
 #include <queue>
 #include "node.hpp"
+
+#include <SFML/Graphics.hpp>
+#include "treeDrawer.hpp"
 
 template<typename T>
 class Tree {
@@ -116,14 +125,25 @@ public:
 
     class In_Order_Iterator {
     private:
-        std::stack<std::pair<Node<T>*, size_t>> stack;
+        std::stack<Node<T>*> stack;
         Node<T>* current;
+
+        void pushLeft(Node<T>* node_ptr) {
+            while (node_ptr != nullptr) {
+                stack.push(node_ptr);
+                if (!node_ptr->get_children().empty()) {
+                    node_ptr = node_ptr->get_children()[0]; // Go to the left child
+                } else {
+                    node_ptr = nullptr;
+                }
+            }
+        }
 
     public:
         In_Order_Iterator(Node<T>* node_ptr) : current(nullptr) {
-            if (node_ptr) {
-                stack.push(std::make_pair(node_ptr, 0));
-                moveToNext();
+            pushLeft(node_ptr);
+            if (!stack.empty()) {
+                current = stack.top();
             }
         }
 
@@ -132,34 +152,32 @@ public:
         }
 
         In_Order_Iterator& operator++() {
-            moveToNext();
+            if (stack.empty()) {
+                current = nullptr;
+                return *this;
+            }
+            current = stack.top();
+            stack.pop();
+            
+            if (!current->get_children().empty() && current->get_children().size() > 1) {
+                Node<T>* node = current->get_children()[1]; // Right child
+                pushLeft(node);
+            }
+            
+            if (!stack.empty()) {
+                current = stack.top();
+            } else {
+                current = nullptr;
+            }
+            
             return *this;
         }
 
         T operator*() const {
             return current->get_value();
         }
-
-    private:
-        void moveToNext() {
-            while (!stack.empty()) {
-                auto& top = stack.top();
-                Node<T>* node = top.first;
-                size_t& child_index = top.second;
-
-                const auto& children = node->get_children();
-                if (child_index < children.size()) {
-                    stack.push(std::make_pair(children[child_index], 0));
-                    ++child_index;
-                } else {
-                    current = node;
-                    stack.pop();
-                    return;
-                }
-            }
-            current = nullptr;
-        }
     };
+
 
     class BFS_Iterator {
     private:
@@ -218,12 +236,45 @@ private:
 
     static void printTree(std::ostream& os, Node<T>* node, int depth) {
         if (!node) return;
+        /*
         os << std::string(static_cast<std::string::size_type>(depth * 2), ' ') << node->get_value() << "\n";
         for (const auto& child : node->get_children()) {
             printTree(os, child, depth + 1);
         }
-    }
+        */
 
+        sf::RenderWindow window(sf::VideoMode(800, 600), "SFML Tree Demo");
+        /*
+        std::cout << "Yeah\n";
+        // Example usage:
+        TreeDrawer<double> drawer;
+        // Add nodes to the tree
+
+        // Example drawing:
+        drawer.drawNode(window, node, 400.f, 300.f, 0.f, 0.f);
+
+        window.display();
+        */
+
+
+        while (window.isOpen()) {
+            sf::Event event;
+            while (window.pollEvent(event)) {
+                if (event.type == sf::Event::Closed)
+                    window.close();
+            }
+
+            window.clear();
+            TreeDrawer<double> drawer;
+            // Add nodes to the tree
+
+            // Example drawing:
+            drawer.drawNode(window, node, 400.f, 300.f, 0.f, 0.f);
+            //tree.printTree(window);
+            window.display();
+        }
+        
+    }
 };
 
 template <typename T>
